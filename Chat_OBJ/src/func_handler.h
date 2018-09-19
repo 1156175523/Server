@@ -16,6 +16,9 @@ void afterServerClose(int);
 //itoa
 int itoa(int num,char* out);
 
+//去除\n
+void removeEnter(char* src);
+
 //获取用户聊天前缀
 int get_prefixInfo(UserInfo* list,int size,const char* IP,const char* fd,char* out_prefix);
 

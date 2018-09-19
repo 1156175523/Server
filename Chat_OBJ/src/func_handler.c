@@ -20,6 +20,33 @@ int itoa(int num,char* out)
     return 0 ;
 }
 
+//去除\r\n
+void removeEnter(char* src)
+{
+    if(src==NULL)
+        return ;
+    int len = strlen(src);
+    int index = 0;
+    while(*src != '\0')
+    {
+        
+        if(*src=='\r' || *src=='\n')
+        {
+            if(index == len-1)
+            {
+                *src='\0';
+                break;
+            }
+            else
+            {
+                *src = ' ';
+            }
+        }
+        src++;
+        index++;
+    }
+}
+
 //服务启关闭后数据处理(清理数据库)
 void afterServerClose(int sig)
 {
@@ -30,7 +57,7 @@ void afterServerClose(int sig)
     
 	int ret = -1;
     MYSQL* mysql = NULL;
-    ret = openMysql(&mysql,"10.130.136.245","root","1","chat",0,NULL,0);
+    ret = openMysql(&mysql,"127.0.0.1","root","1","chat",0,NULL,0);
     if(ret != 0)
     {
         printf("MYSQL ERR:%s\n",sql_errInfo);
@@ -61,7 +88,8 @@ int get_prefixInfo(UserInfo *list,int size,const char* IP,const char* fd,char* o
         //printf("IP[%s]fd[%s]\n",list[index].IP,list[index].fd);
         if(strcmp(list[index].IP,IP) != 0 || strcmp(list[index].fd,fd) != 0)
             continue;
-        sprintf(ret,"[%s|%s]:",list[index].IP,list[index].fd);
+        //sprintf(ret,"[%s|%s]:",list[index].IP,list[index].fd);
+        sprintf(ret,"[%s|%s]:",list[index].IP,list[index].name);
         strcpy(out_prefix,ret);
         return 0;
     }
@@ -139,7 +167,7 @@ void* deal_landing(void* arg)
     char sql[1024]={0};
     char exit_info[1024]="与服务器断开连接!";
 	//int ret = openMysql(&mysql,"192.168.52.132","root","1","chat",0,NULL,0);
-	int ret = openMysql(&mysql,"10.130.136.245","root","1","chat",0,NULL,0);
+	int ret = openMysql(&mysql,"127.0.0.1","root","1","chat",0,NULL,0);
 	//int ret = openMysql(&mysql,"127.0.0.1","root","1","chat",0,NULL,0);
 	if(ret != 0)
     {
@@ -156,12 +184,15 @@ void* deal_landing(void* arg)
     memset(sql,0x00,sizeof(sql));
     char str_fd[8]={0};
     itoa(var->fd,str_fd);
+
+#if 0
     sprintf(sql,"insert into chatUser values('%s','%s','%s','%s')",IP,IP,str_fd,"1");
     ret = sql_query(mysql,sql);
  	if(ret != 0)
  	{
  		printf("MYSQL ERR:%s\n",sql_errInfo);
  	}
+#endif
 
     //获取当前所有用户
     UserInfo userInfo[1024];
@@ -175,17 +206,39 @@ void* deal_landing(void* arg)
 
     //获取用户前缀
     char prefixInfo[1024]={0};
-    get_prefixInfo(userInfo,1024,IP,str_fd,prefixInfo);
+    //get_prefixInfo(userInfo,1024,IP,str_fd,prefixInfo);
 
     //提示新用户登陆
     char info[1024]={0};
-    strcpy(info,prefixInfo);
-    infoShow(userInfo,1024,strcat(info,LANDING));
+    //strcpy(info,prefixInfo);
+    //infoShow(userInfo,1024,strcat(info,LANDING));
     
     //读写
     char buf[2048]={0};
+    int flag = 0;   //标识符-获取用户名
     while(recv(var->fd,buf,sizeof(buf),0) > 0)
     {
+        if(flag == 0)
+        {//首次登陆获取用户名
+            removeEnter(buf);
+            sprintf(sql,"insert into chatUser values('%s','%s','%s','%s')",IP,buf,str_fd,"1");
+            ret = sql_query(mysql,sql);
+            if(ret != 0)
+            {
+                printf("MYSQL ERR:%s\n",sql_errInfo);
+            }
+            ret = get_userInfo(mysql,userInfo);
+            if(ret != 0)
+            {
+                printLog(__FILE__,__LINE__,"获取当前登陆用户信息出错");
+                goto end;
+            }
+            get_prefixInfo(userInfo,1024,IP,str_fd,prefixInfo);
+            strcpy(info,prefixInfo);
+            infoShow(userInfo,1024,strcat(info,LANDING));
+            flag = 1;
+            continue;
+        }
         ret = get_userInfo(mysql,userInfo);
         if(ret != 0)
         {
