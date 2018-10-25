@@ -79,8 +79,9 @@ void* read_stdin_callback(void* arg)
         //合并发送
         char sum[256]={0};
         memcpy(sum,head,4);
+        //memcpy(sum,&data_len,4);
         memcpy(sum+4,buf,strlen(buf));
-        send(c_fd,buf,4+strlen(buf),0);
+        send(c_fd,sum,4+strlen(buf),0);
 
 #if 0
         int pos = 0;

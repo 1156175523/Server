@@ -103,14 +103,14 @@ end:
 
 int parse_command(int c_fd,char* data)
 {
-    //uint32_t data_len = 0;
-    //memcpy(&data_len,data,4);
-    //data_len = ntohl(data_len);
-    //printf("data_len:%d \n",data_len);
-    //sprintf(data,"%s",data+4);
+    uint32_t data_len = 0;
+    memcpy(&data_len,data,4);
+    data_len = ntohl(data_len);
+    printf("data_len:%d \n",data_len);
+    sprintf(data,"%s",data+4);
     printf("commad:[%s]\n",data);
 
-#if 0
+#if 0   //debug
     int index = 0;
     while(index < 120)
     {
@@ -196,6 +196,7 @@ loop:
         ret = recv(c_fd,buf,sizeof(buf),0);
         if(ret > 0)
         {
+            printf("Server Recv:[%d]\n",ret);
             ret = parse_command(c_fd,buf);
             if(ret < 0)
             {
