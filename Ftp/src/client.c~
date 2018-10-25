@@ -1,0 +1,49 @@
+#include <stdio.h>
+#include <string.h>
+#include <strings.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "../inc/public.h"
+
+//FTP客户端
+int ftp_client()
+{
+    int c_fd = socket(AF_INET,SOCK_STREAM,0);
+    LOG(c_fd,"Socket");
+
+    int ret = -1;
+    struct sockaddr_in c_addr;
+    bzero(&c_addr,sizeof(c_addr));
+    socklen_t len = sizeof(c_addr);
+    c_addr.sin_family      = AF_INET;
+    c_addr.sin_port        = htons(0);
+    c_addr.sin_addr.s_addr = INADDR_ANY;
+
+    ret = connect(c_fd,c_addr,c_len);
+    LOG(ret,"Connect");
+
+    char buf[1024+1]={0};
+    char head[4] = {0};
+
+    strcpy(buf,"hello world!");
+    while(1)
+    {
+        send(c_fd,buf,strlen(buf),0);
+        recv(c_fd,buf,sizeof(head),0);
+        
+    }
+
+    return 0;
+end:
+    return -1;
+}
+
+
+int main(int argc,char* argv[])
+{
+    return 0;
+}
